@@ -1,9 +1,11 @@
 use std::io::{stdin, stdout, Stdin, Stdout, Write};
 use std::{collections::HashSet, time::Duration};
+
 use termion::event::Key;
-use termion::input;
 use termion::input::{Keys, TermRead};
 use termion::raw::RawTerminal;
+use termion::{clear, input};
+use termion::{cursor, terminal_size};
 use termion::{raw::IntoRawMode, screen::AlternateScreen};
 
 const MOST_COMMON: &str = include_str!("../1000-most-common.txt");
@@ -50,8 +52,15 @@ fn run(app: SpacedTyping, mut tui: Tui) -> AppResult<()> {
     let mut keys: Keys<Stdin> = tui.stdin.keys();
 
     loop {
+        let (x, y) = terminal_size()?;
         // render
-        write!(tui.stdout, "counter: {counter}")?;
+        write!(
+            tui.stdout,
+            "{}{}counter: {counter}",
+            clear::All,
+            cursor::Goto(x / 2, y / 2),
+        )?;
+        tui.stdout.flush()?;
         // wait on event
         let key: Key = keys.next().unwrap()?;
         // change state based on event
