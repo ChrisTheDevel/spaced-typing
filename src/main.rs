@@ -9,6 +9,8 @@ use termion::{clear, style};
 use termion::{cursor, terminal_size};
 
 const MOST_COMMON: &str = include_str!("../1000-most-common.txt");
+const FGRED: Fg<color::Red> = Fg(Red);
+const FGRESET: Fg<color::Reset> = Fg(Reset);
 
 struct TUI {
     stdout: RawTerminal<Stdout>,
@@ -111,21 +113,45 @@ enum AppError {
     TUIError(std::io::Error),
 }
 
+fn format_red(s: &str) -> String {
+    let mut output = String::new();
+    let mut temp = String::new();
+    for char in s.chars() {
+        if char.is_whitespace() {
+            if temp.len() > 5 {
+                output.push_str(&format!("{}{temp}{}", Fg(Red), Fg(Reset)));
+                temp.clear();
+            } else if temp.len() != 0 {
+                output.push_str(&temp);
+                temp.clear();
+            }
+            output.push(' ');
+        } else {
+            temp.push(char);
+        }
+    }
+    if temp.len() > 5 {
+        output.push_str(&format!("{}{temp}{}", Fg(Red), Fg(Reset)));
+        temp.clear();
+    } else if temp.len() != 0 {
+        output.push_str(&temp);
+        temp.clear();
+    }
+    output
+}
+
 fn run(app: SpacedTyping, mut tui: TUI) -> AppResult<()> {
     let mut should_quit = false;
     // let wanted = "this is a long test sentence which hopefully spans multiple lines and will be nice to look at";
     // let typed = "this is a long test sentebce which hopefully bpans mulkiple lines and will be";
-    let mut input = format!(
-        "this is a test string with {}some ascii{} escape codes inserted",
-        Fg(Red),
-        Fg(Reset)
-    );
+    let mut input = String::new();
     let max_width = 50;
 
     loop {
         // render
         tui.clear()?;
-        tui.render(&input, max_width)?;
+        tui.render(&format_red(&format_red(&input)), max_width)?;
+        //tui.render(&format!("this is a very long sentence with some words here and some there and some more here and now I start to include some words with {FGRED}red color in them{FGRESET} and hopefully they take the same width"), max_width)?;
         tui.flush()?;
 
         // wait on event
